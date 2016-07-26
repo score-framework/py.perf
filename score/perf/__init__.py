@@ -26,4 +26,6 @@
 
 from ._init import init, ConfiguredPerfModule
 
+__version__ = '0.0.1'
+
 __all__ = ('init', 'ConfiguredPerfModule')
