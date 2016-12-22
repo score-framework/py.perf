@@ -26,12 +26,13 @@
 
 import collections
 from datetime import datetime
-import signal
-import atexit
 import os
 import time
+import sys
 import subprocess
+import threading
 from score.init import ConfiguredModule, ConfigurationError, parse_time_interval
+from score.serve import SimpleWorker
 
 
 defaults = {
@@ -94,17 +95,25 @@ class ConfiguredPerfModule(ConfiguredModule):
         super().__init__(score.perf)
         self.sample_interval = sample_interval
         self.output_interval = output_interval
-        self.last_output = time.time()
         self._stack_counts = collections.defaultdict(int)
         self.file = file
 
-    def _finalize(self):
-        signal.signal(signal.SIGPROF, self._sample)
-        signal.setitimer(signal.ITIMER_PROF, self.sample_interval, 0)
-        atexit.register(self.update_graph)
-        self.start_time = time.time()
+    def score_serve_workers(self):
+        return Worker(self)
 
-    def _sample(self, signum, frame):
+    def _sample(self, frame=None):
+        if frame is None:
+            for thread_id, frame in sys._current_frames().items():
+                if thread_id == threading.current_thread().ident:
+                    continue
+                top_frame = frame
+                while top_frame.f_back:
+                    top_frame = top_frame.f_back
+                if top_frame.f_globals.get('__name__') == '__main__':
+                    continue
+                self._sample(frame)
+            return
+
         stack = []
         while frame is not None:
             formatted_frame = '{}({})'.format(frame.f_code.co_name,
@@ -114,10 +123,6 @@ class ConfiguredPerfModule(ConfiguredModule):
 
         formatted_stack = ';'.join(reversed(stack))
         self._stack_counts[formatted_stack] += 1
-        signal.setitimer(signal.ITIMER_PROF, self.sample_interval, 0)
-        if time.time() - self.last_output >= self.output_interval:
-            self.update_graph()
-            self.last_output = time.time()
 
     def update_graph(self):
         proc = subprocess.Popen(
@@ -138,3 +143,20 @@ class ConfiguredPerfModule(ConfiguredModule):
         lines = ['{} {}\n'.format(frame, count)
                  for frame, count in ordered_stacks]
         return ''.join(lines)
+
+
+class Worker(SimpleWorker):
+
+    def __init__(self, conf):
+        super().__init__()
+        self.conf = conf
+
+    def loop(self):
+        last_output = time.time()
+        while self.running:
+            time.sleep(self.conf.sample_interval)
+            self.conf._sample()
+            if time.time() - last_output >= self.conf.output_interval:
+                self.conf.update_graph()
+                last_output = time.time()
+        self.conf.update_graph()
