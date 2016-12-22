@@ -25,7 +25,8 @@
 # Licensee has his registered seat, an establishment or assets.
 
 from ._init import init, ConfiguredPerfModule
+from .stopwatch import Stopwatch
 
 __version__ = '0.0.1'
 
-__all__ = ('init', 'ConfiguredPerfModule')
+__all__ = ('init', 'ConfiguredPerfModule', 'Stopwatch')
