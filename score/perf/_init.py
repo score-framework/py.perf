@@ -32,7 +32,6 @@ import sys
 import subprocess
 import threading
 from score.init import ConfiguredModule, ConfigurationError, parse_time_interval
-from score.serve import SimpleWorker
 
 
 defaults = {
@@ -145,18 +144,23 @@ class ConfiguredPerfModule(ConfiguredModule):
         return ''.join(lines)
 
 
-class Worker(SimpleWorker):
+try:
+    from score.serve import SimpleWorker
+except ImportError:
+    pass
+else:
+    class Worker(SimpleWorker):
 
-    def __init__(self, conf):
-        super().__init__()
-        self.conf = conf
+        def __init__(self, conf):
+            super().__init__()
+            self.conf = conf
 
-    def loop(self):
-        last_output = time.time()
-        while self.running:
-            time.sleep(self.conf.sample_interval)
-            self.conf._sample()
-            if time.time() - last_output >= self.conf.output_interval:
-                self.conf.update_graph()
-                last_output = time.time()
-        self.conf.update_graph()
+        def loop(self):
+            last_output = time.time()
+            while self.running:
+                time.sleep(self.conf.sample_interval)
+                self.conf._sample()
+                if time.time() - last_output >= self.conf.output_interval:
+                    self.conf.update_graph()
+                    last_output = time.time()
+            self.conf.update_graph()
