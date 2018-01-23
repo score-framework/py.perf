@@ -20,3 +20,10 @@ class Stopwatch():
         else:
             msg = timing
         self.logger.info(msg, *args)
+
+    def __enter__(self):
+        self('__enter__')
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self('__exit__')
