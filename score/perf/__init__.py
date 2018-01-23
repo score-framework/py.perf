@@ -1,4 +1,4 @@
-# Copyright © 2016 STRG.AT GmbH, Vienna, Austria
+# Copyright © 2016-2018 STRG.AT GmbH, Vienna, Austria
 #
 # This file is part of the The SCORE Framework.
 #
@@ -27,6 +27,6 @@
 from ._init import init, ConfiguredPerfModule
 from .stopwatch import Stopwatch
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 __all__ = ('init', 'ConfiguredPerfModule', 'Stopwatch')
