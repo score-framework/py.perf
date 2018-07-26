@@ -27,6 +27,6 @@
 from ._init import init, ConfiguredPerfModule
 from .stopwatch import Stopwatch
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 __all__ = ('init', 'ConfiguredPerfModule', 'Stopwatch')
