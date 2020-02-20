@@ -4,8 +4,8 @@
 #
 # The SCORE Framework and all its parts are free software: you can redistribute
 # them and/or modify them under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation which is in the
-# file named COPYING.LESSER.txt.
+# License version 3 as published by the Free Software Foundation which is in
+# the file named COPYING.LESSER.txt.
 #
 # The SCORE Framework and all its parts are distributed without any WARRANTY;
 # without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
@@ -21,8 +21,8 @@
 # concerning this License-Agreement including the issue of its valid conclusion
 # and its pre- and post-contractual effects are exclusively decided by the
 # competent court, in whose district STRG.AT GmbH has its registered seat, at
-# the discretion of STRG.AT GmbH also the competent court, in whose district the
-# Licensee has his registered seat, an establishment or assets.
+# the discretion of STRG.AT GmbH also the competent court, in whose district
+# the Licensee has his registered seat, an establishment or assets.
 
 import collections
 from datetime import datetime
@@ -31,7 +31,8 @@ import time
 import sys
 import subprocess
 import threading
-from score.init import ConfiguredModule, ConfigurationError, parse_time_interval
+from score.init import (
+    ConfiguredModule, ConfigurationError, parse_time_interval)
 
 
 defaults = {
@@ -54,8 +55,8 @@ def init(confdict):
         Interval in which to update resulting graph.
 
     :confkey:`output.folder` :confdefault:`.`
-        Folder to write results to. Will create a file with this process's start
-        time and PID as file name.
+        Folder to write results to. Will create a file with this process's
+        start time and PID as file name.
 
     :confkey:`output.file`
         This may be provided instead of ``output.folder``, in which case the
@@ -70,7 +71,8 @@ def init(confdict):
         if not os.path.isdir(os.path.dirname(file)):
             import score.perf
             raise ConfigurationError(
-                score.perf, 'Folder of configured `output.file` does not exist')
+                score.perf,
+                'Folder of configured `output.file` does not exist')
     else:
         if not os.path.isdir(conf['output.folder']):
             import score.perf
