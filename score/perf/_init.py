@@ -40,6 +40,7 @@ defaults = {
     'output_interval': '5s',
     'output.folder': '.',
     'output.file': None,
+    'filter': None,
 }
 
 
@@ -61,6 +62,9 @@ def init(confdict):
     :confkey:`output.file`
         This may be provided instead of ``output.folder``, in which case the
         output will be written to this specific file.
+
+    :confkey:`filter`
+        Optional python package to limit sampling to.
     """
     conf = dict(defaults.items())
     conf.update(confdict)
@@ -82,8 +86,8 @@ def init(confdict):
         file = os.path.join(
             conf['output.folder'], '%s-%d.svg' % (
                 now.strftime('%Y-%m-%d %H:%M:%S'), os.getpid()))
-
-    return ConfiguredPerfModule(sample_interval, output_interval, file)
+    return ConfiguredPerfModule(
+        sample_interval, output_interval, file, conf['filter'])
 
 
 class ConfiguredPerfModule(ConfiguredModule):
@@ -91,13 +95,14 @@ class ConfiguredPerfModule(ConfiguredModule):
     This module's :class:`configuration object <score.init.ConfiguredModule>`.
     """
 
-    def __init__(self, sample_interval, output_interval, file):
+    def __init__(self, sample_interval, output_interval, file, filter):
         import score.perf
         super().__init__(score.perf)
         self.sample_interval = sample_interval
         self.output_interval = output_interval
         self._stack_counts = collections.defaultdict(int)
         self.file = file
+        self.filter = filter
 
     def score_serve_workers(self):
         return Worker(self)
@@ -114,12 +119,18 @@ class ConfiguredPerfModule(ConfiguredModule):
             self._sample_frame(frame)
 
     def _sample_frame(self, frame):
+        filter_match = self.filter is None
         stack = []
         while frame is not None:
-            formatted_frame = '{}({})'.format(frame.f_code.co_name,
-                                              frame.f_globals.get('__name__'))
+            method_name = frame.f_code.co_name
+            module_name = frame.f_globals.get('__name__')
+            if not filter_match and module_name:
+                filter_match = module_name.startswith(self.filter)
+            formatted_frame = '{}({})'.format(method_name, module_name)
             stack.append(formatted_frame)
             frame = frame.f_back
+        if not filter_match:
+            return
         formatted_stack = ';'.join(reversed(stack))
         self._stack_counts[formatted_stack] += 1
 
