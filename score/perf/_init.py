@@ -100,26 +100,24 @@ class ConfiguredPerfModule(ConfiguredModule):
     def score_serve_workers(self):
         return Worker(self)
 
-    def _sample(self, frame=None):
-        if frame is None:
-            for thread_id, frame in sys._current_frames().items():
-                if thread_id == threading.current_thread().ident:
-                    continue
-                top_frame = frame
-                while top_frame.f_back:
-                    top_frame = top_frame.f_back
-                if top_frame.f_globals.get('__name__') == '__main__':
-                    continue
-                self._sample(frame)
-            return
+    def _sample(self):
+        for thread_id, frame in sys._current_frames().items():
+            if thread_id == threading.current_thread().ident:
+                continue
+            top_frame = frame
+            while top_frame.f_back:
+                top_frame = top_frame.f_back
+            if top_frame.f_globals.get('__name__') == '__main__':
+                continue
+            self._sample_frame(frame)
 
+    def _sample_frame(self, frame):
         stack = []
         while frame is not None:
             formatted_frame = '{}({})'.format(frame.f_code.co_name,
                                               frame.f_globals.get('__name__'))
             stack.append(formatted_frame)
             frame = frame.f_back
-
         formatted_stack = ';'.join(reversed(stack))
         self._stack_counts[formatted_stack] += 1
 
